@@ -13,6 +13,7 @@ typedef struct {
 	int *A;
 	int *B;
 } argumentosThread;
+pthread_mutex_t mutex; // Variável global mutex
 
 int* geraVetor() {
 	int a;
@@ -28,6 +29,7 @@ void *calculaProdutoEscalar(void *argumento){
 	int resultado = 0;
 	int c,j;
 	j = VECSIZE/NTHREADS;
+	pthread_mutex_lock(&mutex); // Início da região crítica
 	for (c = 0; c < j; c++) {
 		resultado += argumentos->A[c] * argumentos->B[c];
 	}
@@ -39,6 +41,7 @@ void *calculaProdutoEscalar(void *argumento){
 		resultado
 	);
 	sum += resultado;
+	pthread_mutex_unlock(&mutex); //Final da região crítica
 	pthread_exit(NULL);
 }
 
@@ -79,6 +82,7 @@ int main(int argc, char *argv) {
 	j = VECSIZE/NTHREADS;
 	k = 0;
 	argumentosThread argumentos[NTHREADS];
+	pthread_mutex_init(&mutex, NULL); // criação da mutex
 	for (i = 0; i < NTHREADS; i++) {
 		argumentos[i].idThread = i; // Numero de thread
 		argumentos[i].posicaoInicial = k; // Index inicial
@@ -95,6 +99,7 @@ int main(int argc, char *argv) {
 	for(i = 0; i < NTHREADS; i++){
 		pthread_join(thread[i], NULL);
 	}
+	pthread_mutex_destroy(&mutex); //destuição da mutex
 	printf("Produto escalar = %d\n", sum);
 	pthread_exit(NULL);
 }
