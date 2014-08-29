@@ -6,13 +6,13 @@
 #define NTHREADS 4
 
 int sum;
-struct argumentosThread {
+typedef struct {
 	int idThread;
 	int posicaoInicial;
 	int posicaoFinal;
 	int *A;
 	int *B;
-};
+} argumentosThread;
 
 int* geraVetor() {
 	int a;
@@ -24,14 +24,21 @@ int* geraVetor() {
 }
 
 void *calculaProdutoEscalar(void *argumento){
-	struct argumentosThread matrizes = (struct argumentosThread) argumento;
-	int resultado;
+	argumentosThread *argumentos = (argumentosThread*) argumento;
+	int resultado = 0;
 	int c,j;
 	j = VECSIZE/NTHREADS;
 	for (c = 0; c < j; c++) {
-		resultado += matrizes[1][c] * matrizes[2][c];
+		resultado += argumentos->A[c] * argumentos->B[c];
 	}
-	printf("Thread %d processou de %d até %d e: Produto escalar parcial: %d", matrizes[0][0], matrizes[0][1], matrizes[0][2], resultado);
+	printf(
+		"Thread %d processou de %d até %d e: Produto escalar parcial: %d\n",
+		argumentos->idThread,
+		argumentos->posicaoInicial,
+		argumentos->posicaoFinal,
+		resultado
+	);
+	sum += resultado;
 	pthread_exit(NULL);
 }
 
@@ -53,22 +60,41 @@ int main(int argc, char *argv) {
 		return 1;
 	}
 	int i, j, k, c;
-	j = VECSIZE/NTHREADS;
-	if(j < 3){
-		j = 3; // Para poder passar informacoes sobre os indices que a thread processou
+	printf("A = ");
+	for(i = 0; i<VECSIZE; i++){
+		if(i+1 == VECSIZE){
+			printf("%d\n", A[i]);
+		} else {
+			printf("%d, ", A[i]);
+		}
 	}
+	printf("B = ");
+        for(i = 0; i<VECSIZE; i++){
+                if(i+1 == VECSIZE){
+                        printf("%d\n", B[i]);
+                } else {
+                        printf("%d, ", B[i]);
+                }
+        } 
+	j = VECSIZE/NTHREADS;
 	k = 0;
-	struct argumentosThread argumentos;
+	argumentosThread argumentos[NTHREADS];
 	for (i = 0; i < NTHREADS; i++) {
-		argumentos.idThread = i; // Numero de thread
-		argumentos.posicaoInicial = k; // Index inicial
+		argumentos[i].idThread = i; // Numero de thread
+		argumentos[i].posicaoInicial = k; // Index inicial
+		argumentos[i].A = (int*) malloc(sizeof(int)*j);
+		argumentos[i].B = (int*) malloc(sizeof(int)*j);
 		for(c = 0; c < j; c++){
-			argumentos.A[c] = A[k];
-			argumentos.B[c] = B[k];
+			argumentos[i].A[c] = A[k];
+			argumentos[i].B[c] = B[k];
 			k++;
 		}
-		argumentos.posicaoFinal = k; // Index final
-		pthread_create(&thread[i], NULL, calculaProdutoEscalar, (void *) argumentos);
+		argumentos[i].posicaoFinal = k; // Index final
+		pthread_create(&thread[i], NULL, calculaProdutoEscalar, (void *) &argumentos[i]);
 	}
+	for(i = 0; i < NTHREADS; i++){
+		pthread_join(thread[i], NULL);
+	}
+	printf("Produto escalar = %d\n", sum);
 	pthread_exit(NULL);
 }
