@@ -29,7 +29,6 @@ void *calculaProdutoEscalar(void *argumento){
 	int resultado = 0;
 	int c,j;
 	j = VECSIZE/NTHREADS;
-	pthread_mutex_lock(&mutex); // Início da região crítica
 	for (c = 0; c < j; c++) {
 		resultado += argumentos->A[c] * argumentos->B[c];
 	}
@@ -37,12 +36,33 @@ void *calculaProdutoEscalar(void *argumento){
 		"Thread %d processou de %d até %d e: Produto escalar parcial: %d\n",
 		argumentos->idThread,
 		argumentos->posicaoInicial,
-		argumentos->posicaoFinal,
+		argumentos->posicaoFinal-1,
 		resultado
 	);
+	pthread_mutex_lock(&mutex); //início da região crítica
 	sum += resultado;
 	pthread_mutex_unlock(&mutex); //Final da região crítica
 	pthread_exit(NULL);
+}
+
+void *imprimeVetores(int *A, int *B) {
+	int i;
+	printf("A = ");
+	for(i = 0; i<VECSIZE; i++){
+		if(i+1 == VECSIZE){
+			printf("%d\n", A[i]);
+		} else {
+			printf("%d, ", A[i]);
+		}
+	}
+	printf("B = ");
+        for(i = 0; i<VECSIZE; i++){
+                if(i+1 == VECSIZE){
+                        printf("%d\n", B[i]);
+                } else {
+                        printf("%d, ", B[i]);
+                }
+        }
 }
 
 int main(int argc, char *argv) {
@@ -63,22 +83,7 @@ int main(int argc, char *argv) {
 		return 1;
 	}
 	int i, j, k, c;
-	printf("A = ");
-	for(i = 0; i<VECSIZE; i++){
-		if(i+1 == VECSIZE){
-			printf("%d\n", A[i]);
-		} else {
-			printf("%d, ", A[i]);
-		}
-	}
-	printf("B = ");
-        for(i = 0; i<VECSIZE; i++){
-                if(i+1 == VECSIZE){
-                        printf("%d\n", B[i]);
-                } else {
-                        printf("%d, ", B[i]);
-                }
-        } 
+	imprimeVetores(A, B);
 	j = VECSIZE/NTHREADS;
 	k = 0;
 	argumentosThread argumentos[NTHREADS];
