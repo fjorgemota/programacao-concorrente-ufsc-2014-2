@@ -45,48 +45,34 @@ void *calculaProdutoEscalar(void *argumento){
 	pthread_exit(NULL);
 }
 
-void *imprimeVetores(int *A, int *B) {
+void imprimirVetor(char vetor, int *valores) {
 	int i;
-	printf("A = ");
+	printf("%c = ", vetor);
 	for(i = 0; i<VECSIZE; i++){
 		if(i+1 == VECSIZE){
-			printf("%d\n", A[i]);
+			printf("%d\n", valores[i]);
 		} else {
-			printf("%d, ", A[i]);
+			printf("%d, ", valores[i]);
 		}
 	}
-	printf("B = ");
-        for(i = 0; i<VECSIZE; i++){
-                if(i+1 == VECSIZE){
-                        printf("%d\n", B[i]);
-                } else {
-                        printf("%d, ", B[i]);
-                }
-        }
 }
 
-int main(int argc, char *argv) {
-        srand(time(NULL));
-
-	int* A;
-	int* B;
-	A = geraVetor();
-	B = geraVetor();
-
-	pthread_t thread[NTHREADS];
-
-	if (NTHREADS > VECSIZE) {
-		printf("Erro: Número de threads é maior que o tamanho do vetor\n");
-		return 1;
-	} else if (VECSIZE%NTHREADS > 0) {
-		printf("Erro: Impossível decidir balanceamento de número de elementos a ser processado por cada thread\n");
-		return 1;
+void esperarThreads(pthread_t *threads) {
+	int i;
+	for(i =0; i<NTHREADS; i++) {
+		pthread_join(threads[i], NULL);
 	}
+}
+
+void imprimeResultado() {
+	printf("Produto Escalar = %d\n", sum);
+}
+
+void prepararThreads(int *A, int *B, pthread_t *thread) {
 	int i, j, k, c;
-	imprimeVetores(A, B);
 	j = VECSIZE/NTHREADS;
 	k = 0;
-	argumentosThread argumentos[NTHREADS];
+	argumentosThread *argumentos = (argumentosThread*)malloc(sizeof(argumentosThread)*NTHREADS);
 	pthread_mutex_init(&mutex, NULL); // criação da mutex
 	for (i = 0; i < NTHREADS; i++) {
 		argumentos[i].idThread = i; // Numero de thread
@@ -101,10 +87,29 @@ int main(int argc, char *argv) {
 		argumentos[i].posicaoFinal = k; // Index final
 		pthread_create(&thread[i], NULL, calculaProdutoEscalar, (void *) &argumentos[i]);
 	}
-	for(i = 0; i < NTHREADS; i++){
-		pthread_join(thread[i], NULL);
-	}
 	pthread_mutex_destroy(&mutex); //destuição da mutex
-	printf("Produto escalar = %d\n", sum);
+}
+
+int main(int argc, char *argv) {
+        srand(time(NULL));
+	int* A;
+	int* B;
+	A = geraVetor();
+	B = geraVetor();
+
+	if (NTHREADS > VECSIZE) {
+		printf("Erro: Número de threads é maior que o tamanho do vetor\n");
+		return 1;
+	} else if (VECSIZE%NTHREADS > 0) {
+		printf("Erro: Impossível decidir balanceamento de número de elementos a ser processado por cada thread\n");
+		return 1;
+	}
+	pthread_t thread[NTHREADS];
+
+	imprimirVetor('A', A);
+	imprimirVetor('B', B);
+	prepararThreads(A, B, thread);
+	esperarThreads(thread);
+	imprimeResultado();
 	pthread_exit(NULL);
 }
