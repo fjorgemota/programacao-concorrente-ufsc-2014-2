@@ -5,7 +5,7 @@ def join(*listas):
 	while c < tamanho:
 		yield [None if c >= len(lista) else lista[c] for lista in listas]
 		c += 1 
-content = subprocess.check_output([sys.argv[1]], shell=True).strip()
+content = subprocess.Popen([sys.argv[1]], stdout=subprocess.PIPE).communicate()[0].strip()
 lines = content.split("\n")
 A = map(lambda n: int(n.strip()), lines[0].split("=", 1)[1].strip().split(","))
 B = map(lambda n: int(n.strip()), lines[1].split("=", 1)[1].strip().split(","))
@@ -15,6 +15,6 @@ print "-"*100
 print content
 print "-"*100
 if produto_escalar_original == produto_escalar_resultado:
-	print "Resultado diferente: O produto escalar total esta correto (%d (original) == %d (calculado))"%(produto_escalar_original, produto_escalar_resultado)
+	print "Resultado igual: O produto escalar total esta correto (%d (original) == %d (calculado))"%(produto_escalar_original, produto_escalar_resultado)
 else:
 	print "Resultado diferente: O produto escalar total esta incorreto (%d (original) != %d (calculado))"%(produto_escalar_original, produto_escalar_resultado)
