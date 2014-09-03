@@ -5,7 +5,7 @@
 #define VECSIZE 16
 #define NTHREADS 4
 
-int sum;
+int sum = 0;
 typedef struct {
 	int idThread;
 	int posicaoInicial;
