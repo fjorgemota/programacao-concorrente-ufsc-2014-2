@@ -9,21 +9,39 @@
 #define TOTAL_CLIENTES 10
 
 queue_t fila;
-sem_t semaforo_funcionario, semaforo_cliente, lock_cliente, lock_funcionario;
+sem_t lock_espera[TOTAL_CLIENTES], lock_chamada, lock_fila;
+
+int length_fila() {
+	sem_wait(&lock_fila);
+	int resultado = length(&fila);
+	sem_post(&lock_fila);
+	return resultado;
+}
+
+void enqueue_fila(int id_cliente) {
+	sem_wait(&lock_fila);
+	enqueue(&fila, id_cliente);
+	sem_post(&lock_fila);
+}
+
+int dequeue_fila() {
+	sem_wait(&lock_fila);
+	int id_cliente = dequeue(&fila);
+	sem_post(&lock_fila);
+	return id_cliente;
+}
 
 void *cliente(void *clientes) {
 	int id_cliente = *((int *)clientes);
 	while(1) {
-		if (length(&fila) < CADEIRAS) {
-			sem_wait(&semaforo_cliente); // Semaforo que indica chegada dos clientes, caso cheio o proximo sera antendido apos
-										// um funcionario chamar, quando abre vagas
-			sem_wait(&lock_cliente); // mutex, o primeiro que chegar pega a vaga na cadeira
-			enqueue(&fila, id_cliente); // Inserir na fila um funcionario
-			printf("Cliente %d: chegou (%d/%d lugares ocupados)\n", id_cliente, length(&fila), CADEIRAS);
-			sem_post(&lock_cliente); // mutex, o que entrou libera a vaga para o proximo que chegar
-			sem_post(&semaforo_funcionario); // Semaforo indicando a chamada de um cliente
+		int tamanho_fila = length_fila();
+		if (tamanho_fila < CADEIRAS) {
+			enqueue_fila(id_cliente);
+			printf("Cliente %d: chegou (%d/%d lugares ocupados)\n", id_cliente, length_fila(), CADEIRAS);
+			sem_post(&lock_chamada);
+			sem_wait(&lock_espera[id_cliente]);
 		} else {
-			printf("Cliente %d: cartório lotado, saindo para dar uma volta (%d/%d lugares ocupados)\n", id_cliente, length(&fila), CADEIRAS);
+			printf("Cliente %d: cartório lotado, saindo para dar uma volta (%d/%d lugares ocupados)\n", id_cliente, length_fila(), CADEIRAS);
 		}
 		sleep(10);
 	}
@@ -33,14 +51,12 @@ void *funcionario(void *func) {
 	int id_cliente;
 	int id_funcionario = *((int *)func);
 	while(1) {
-		sem_wait(&semaforo_funcionario); // Semaforo que indica os funcionarios que atenderao os clientes
-		sem_wait(&lock_funcionario); // mutex, apenas um funcionario chama um cliente por vez
-		id_cliente = dequeue(&fila); // Remover o primeiro da fila
-		printf ("Funcionário %d: atendendo cliente %d (%d/%d lugares ocupados)\n", id_funcionario, id_cliente, length(&fila), CADEIRAS);
-		sem_post(&lock_funcionario); // mutex, um funcionario esta atendendo um cliente
-		sem_post(&semaforo_cliente); // Semaforo indicando que o cliente ja foi atendido
+		sem_wait(&lock_chamada);
+		id_cliente = dequeue_fila(); // Remover o primeiro da fila
+		printf ("Funcionário %d: atendendo cliente %d (%d/%d lugares ocupados)\n", id_funcionario, id_cliente, length_fila(), CADEIRAS);
 		sleep(5 + rand() % 6);
-		printf("Funcionário %d: terminou de atender o cliente %d (%d/%d lugares ocupados)\n", id_funcionario, id_cliente, length(&fila), CADEIRAS);
+		sem_post(&lock_espera[id_cliente]);
+		printf("Funcionário %d: terminou de atender o cliente %d (%d/%d lugares ocupados)\n", id_funcionario, id_cliente, length_fila(), CADEIRAS);
 	}
 }
 
@@ -49,13 +65,14 @@ int main(int argc, char **argv) {
 	pthread_t funcionarios[TOTAL_FUNCIONARIOS];
 	int id;
 
-	sem_init(&semaforo_cliente, 0, 4);
-	sem_init(&semaforo_funcionario, 0, 2);
-	sem_init(&lock_cliente, 0, 1);
-	sem_init(&lock_funcionario, 0, 1);
+	sem_init(&lock_fila, 0, 1);
+	sem_init(&lock_chamada, 0, 1);
+
+	for (id = 0; id < TOTAL_CLIENTES; id++) {
+		sem_init(&lock_espera[id], 0, 0);
+	}
 
 	init_queue(&fila);
-	// printf("fila: %d\n", length(&fila));
 	for (id = 0; id < TOTAL_CLIENTES; id++) {
 		int *argumento_id = malloc(sizeof(*argumento_id));
 		if (argumento_id == NULL) {
@@ -80,10 +97,10 @@ int main(int argc, char **argv) {
 	for (id = 0; id < TOTAL_FUNCIONARIOS; id++) {
 		pthread_join(funcionarios[id], NULL);
 	}
-	sem_destroy(&semaforo_cliente);
-	sem_destroy(&semaforo_funcionario);
-	sem_destroy(&lock_cliente);
-	sem_destroy(&lock_funcionario);
+	sem_destroy(&lock_fila);
+	for (id = 0; id < TOTAL_CLIENTES; id++) {
+		sem_destroy(&lock_espera[id]);
+	}
 
 	pthread_exit(NULL);
 	pthread_exit(NULL);
