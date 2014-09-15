@@ -60,47 +60,78 @@ void *funcionario(void *func) {
 	}
 }
 
-int main(int argc, char **argv) {
-	pthread_t clientes[TOTAL_CLIENTES];
-	pthread_t funcionarios[TOTAL_FUNCIONARIOS];
+void criaThreadsClientes(pthread_t *clientes) {
 	int id;
-
-	sem_init(&lock_fila, 0, 1);
-	sem_init(&lock_chamada, 0, 1);
-
-	for (id = 0; id < TOTAL_CLIENTES; id++) {
-		sem_init(&lock_espera[id], 0, 0);
-	}
-
-	init_queue(&fila);
 	for (id = 0; id < TOTAL_CLIENTES; id++) {
 		int *argumento_id = malloc(sizeof(*argumento_id));
 		if (argumento_id == NULL) {
 			printf("Nao foi possivel alocar memoria para argumento_id\n");
-			return 1;
+			pthread_exit(NULL);
 		}
 		*argumento_id = id;
 		pthread_create(&clientes[id], NULL, cliente, (void *) argumento_id);
 	}
+}
+
+void criaThreadsFuncionarios(pthread_t *funcionarios) {
+	int id;
 	for (id = 0; id < TOTAL_FUNCIONARIOS; id++) {
 		int *argumentos_id = malloc(sizeof(*argumentos_id));
 		if (argumentos_id == NULL) {
 			printf("Nao foi possivel alocar memoria para argumentos_id\n");
-			return 1;
+			pthread_exit(NULL);
 		}
 		*argumentos_id = id;
 		pthread_create(&funcionarios[id], NULL, funcionario, (void *) argumentos_id);
 	}
+}
+
+void esperarThreadsClientes(pthread_t *clientes) {
+	int id;
 	for (id = 0; id < TOTAL_CLIENTES; id++) {
 		pthread_join(clientes[id], NULL);
 	}
+}
+
+void esperarThreadsFuncionarios(pthread_t *funcionarios) {
+	int id;
 	for (id = 0; id < TOTAL_FUNCIONARIOS; id++) {
 		pthread_join(funcionarios[id], NULL);
 	}
-	sem_destroy(&lock_fila);
-	for (id = 0; id < TOTAL_CLIENTES; id++) {
-		sem_destroy(&lock_espera[id]);
+}
+
+void inicializarSemaforos() {
+	int contador;
+	sem_init(&lock_fila, 0, 1);
+	sem_init(&lock_chamada, 0, 1);
+	for (contador = 0; contador < TOTAL_CLIENTES; contador++) {
+		sem_init(&lock_espera[contador], 0, 0);
 	}
+}
+
+void destruirSemaforos() {
+	int contador;
+	sem_destroy(&lock_fila);
+	sem_destroy(&lock_chamada);
+	for (contador = 0; contador < TOTAL_CLIENTES; contador++) {
+		sem_destroy(&lock_espera[contador]);
+	}
+}
+
+int main(int argc, char **argv) {
+	int id;
+	pthread_t clientes[TOTAL_CLIENTES];
+	pthread_t funcionarios[TOTAL_FUNCIONARIOS];
+
+	inicializarSemaforos();
+
+	init_queue(&fila);
+	criaThreadsClientes(clientes);
+	criaThreadsFuncionarios(funcionarios);
+	esperarThreadsClientes(clientes);
+	esperarThreadsFuncionarios(funcionarios);
+
+	destruirSemaforos();
 
 	pthread_exit(NULL);
 	pthread_exit(NULL);
