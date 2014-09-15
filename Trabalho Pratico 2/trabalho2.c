@@ -45,6 +45,7 @@ void *cliente(void *clientes) {
 		}
 		sleep(10);
 	}
+	pthread_exit(NULL);
 }
 
 void *funcionario(void *func) {
@@ -58,6 +59,7 @@ void *funcionario(void *func) {
 		sem_post(&lock_espera[id_cliente]);
 		printf("Funcionário %d: terminou de atender o cliente %d (%d/%d lugares ocupados)\n", id_funcionario, id_cliente, length_fila(), CADEIRAS);
 	}
+	pthread_exit(NULL);
 }
 
 void criaThreadsClientes(pthread_t *clientes) {
@@ -119,7 +121,6 @@ void destruirSemaforos() {
 }
 
 int main(int argc, char **argv) {
-	int id;
 	pthread_t clientes[TOTAL_CLIENTES];
 	pthread_t funcionarios[TOTAL_FUNCIONARIOS];
 
@@ -132,7 +133,4 @@ int main(int argc, char **argv) {
 	esperarThreadsFuncionarios(funcionarios);
 
 	destruirSemaforos();
-
-	pthread_exit(NULL);
-	pthread_exit(NULL);
 }
