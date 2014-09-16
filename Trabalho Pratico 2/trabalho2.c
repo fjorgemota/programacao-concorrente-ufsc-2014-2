@@ -33,7 +33,6 @@ int dequeue_fila() {
 
 void *cliente(void *clientes) {
 	int id_cliente = *((int *)clientes);
-	printf("Inicializando cliente %d\n", id_cliente);
 	while(1) {
 		int tamanho_fila = length_fila();
 		if (tamanho_fila < CADEIRAS) {
@@ -52,7 +51,6 @@ void *cliente(void *clientes) {
 void *funcionario(void *func) {
 	int id_cliente;
 	int id_funcionario = *((int *)func);
-	printf("Inicializando funcionario %d\n", id_funcionario);
 	while(1) {
 		sem_wait(&lock_chamada);
 		id_cliente = dequeue_fila(); // Remover o primeiro da fila
