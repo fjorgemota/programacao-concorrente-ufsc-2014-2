@@ -33,6 +33,7 @@ int dequeue_fila() {
 
 void *cliente(void *clientes) {
 	int id_cliente = *((int *)clientes);
+	printf("Inicializando cliente %d\n", id_cliente);
 	while(1) {
 		int tamanho_fila = length_fila();
 		if (tamanho_fila < CADEIRAS) {
@@ -51,6 +52,7 @@ void *cliente(void *clientes) {
 void *funcionario(void *func) {
 	int id_cliente;
 	int id_funcionario = *((int *)func);
+	printf("Inicializando funcionario %d\n", id_funcionario);
 	while(1) {
 		sem_wait(&lock_chamada);
 		id_cliente = dequeue_fila(); // Remover o primeiro da fila
@@ -62,29 +64,19 @@ void *funcionario(void *func) {
 	pthread_exit(NULL);
 }
 
-void criaThreadsClientes(pthread_t *clientes) {
+void criaThreadsClientes(pthread_t *clientes, int *argumentos) {
 	int id;
 	for (id = 0; id < TOTAL_CLIENTES; id++) {
-		int *argumento_id = malloc(sizeof(*argumento_id));
-		if (argumento_id == NULL) {
-			printf("Nao foi possivel alocar memoria para argumento_id\n");
-			pthread_exit(NULL);
-		}
-		*argumento_id = id;
-		pthread_create(&clientes[id], NULL, cliente, (void *) argumento_id);
+		argumentos[id] = id;
+		pthread_create(&clientes[id], NULL, cliente, (void *) &argumentos[id]);
 	}
 }
 
-void criaThreadsFuncionarios(pthread_t *funcionarios) {
+void criaThreadsFuncionarios(pthread_t *funcionarios, int *argumentos) {
 	int id;
 	for (id = 0; id < TOTAL_FUNCIONARIOS; id++) {
-		int *argumentos_id = malloc(sizeof(*argumentos_id));
-		if (argumentos_id == NULL) {
-			printf("Nao foi possivel alocar memoria para argumentos_id\n");
-			pthread_exit(NULL);
-		}
-		*argumentos_id = id;
-		pthread_create(&funcionarios[id], NULL, funcionario, (void *) argumentos_id);
+		argumentos[id] = id;
+		pthread_create(&funcionarios[id], NULL, funcionario, (void *) &argumentos[id]);
 	}
 }
 
@@ -123,12 +115,14 @@ void destruirSemaforos() {
 int main(int argc, char **argv) {
 	pthread_t clientes[TOTAL_CLIENTES];
 	pthread_t funcionarios[TOTAL_FUNCIONARIOS];
+	int argumentos_clientes[TOTAL_CLIENTES];
+	int argumentos_funcionarios[TOTAL_FUNCIONARIOS];
 
 	inicializarSemaforos();
 
 	init_queue(&fila);
-	criaThreadsClientes(clientes);
-	criaThreadsFuncionarios(funcionarios);
+	criaThreadsClientes(clientes, argumentos_clientes);
+	criaThreadsFuncionarios(funcionarios, argumentos_funcionarios);
 	esperarThreadsClientes(clientes);
 	esperarThreadsFuncionarios(funcionarios);
 
