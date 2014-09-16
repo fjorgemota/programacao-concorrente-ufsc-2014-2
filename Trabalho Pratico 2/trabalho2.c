@@ -9,7 +9,7 @@
 #define TOTAL_CLIENTES 10
 
 queue_t fila;
-sem_t lock_espera[TOTAL_CLIENTES], lock_chamada, lock_fila;
+sem_t lock_espera[TOTAL_CLIENTES], lock_sem_clientes, lock_fila;
 
 int length_fila() {
 	sem_wait(&lock_fila);
@@ -38,7 +38,7 @@ void *cliente(void *clientes) {
 		if (tamanho_fila < CADEIRAS) {
 			enqueue_fila(id_cliente);
 			printf("Cliente %d: chegou (%d/%d lugares ocupados)\n", id_cliente, length_fila(), CADEIRAS);
-			sem_post(&lock_chamada);
+			sem_post(&lock_sem_clientes);
 			sem_wait(&lock_espera[id_cliente]);
 		} else {
 			printf("Cliente %d: cartório lotado, saindo para dar uma volta (%d/%d lugares ocupados)\n", id_cliente, length_fila(), CADEIRAS);
@@ -52,7 +52,7 @@ void *funcionario(void *func) {
 	int id_cliente;
 	int id_funcionario = *((int *)func);
 	while(1) {
-		sem_wait(&lock_chamada);
+		sem_wait(&lock_sem_clientes);
 		id_cliente = dequeue_fila(); // Remover o primeiro da fila
 		printf ("Funcionário %d: atendendo cliente %d (%d/%d lugares ocupados)\n", id_funcionario, id_cliente, length_fila(), CADEIRAS);
 		sleep(5 + rand() % 6);
@@ -95,7 +95,7 @@ void esperarThreadsFuncionarios(pthread_t *funcionarios) {
 void inicializarSemaforos() {
 	int contador;
 	sem_init(&lock_fila, 0, 1);
-	sem_init(&lock_chamada, 0, 1);
+	sem_init(&lock_sem_clientes, 0, 1);
 	for (contador = 0; contador < TOTAL_CLIENTES; contador++) {
 		sem_init(&lock_espera[contador], 0, 0);
 	}
@@ -104,7 +104,7 @@ void inicializarSemaforos() {
 void destruirSemaforos() {
 	int contador;
 	sem_destroy(&lock_fila);
-	sem_destroy(&lock_chamada);
+	sem_destroy(&lock_sem_clientes);
 	for (contador = 0; contador < TOTAL_CLIENTES; contador++) {
 		sem_destroy(&lock_espera[contador]);
 	}
