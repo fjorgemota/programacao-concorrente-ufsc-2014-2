@@ -62,7 +62,7 @@ void *funcionario(void *func) {
 		printf ("Funcionário %d: atendendo cliente %d (%d/%d lugares ocupados)\n", id_funcionario, id_cliente, length_fila(), CADEIRAS);
 		sem_post(&lock_funcionario); // Libera o lock do dequeue+impressao no funcionario
 		sleep(5 + rand() % 6); // Aguarda um periodo randomico entre 5 e 10 segundos
-		printf("Funcionário %d: terminou de atender o cliente %d (%d/%d lugares ocupados)\n", id_funcionario, id_cliente,  length(&fila), CADEIRAS);
+		printf("Funcionário %d: terminou de atender o cliente %d (%d/%d lugares ocupados)\n", id_funcionario, id_cliente,  length_fila(), CADEIRAS);
 		sem_post(&ha_funcionarios); // Informa o cliente de que um funcionario esta livre para o processamento
 		sem_post(&lock_espera_atendimento[id_cliente]); // Informa o cliente em especifico de que o atendimento dele ja acabou
 	}
