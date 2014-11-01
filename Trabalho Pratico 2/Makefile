@@ -4,6 +4,7 @@ CC := gcc
 .PHONY: trabalho2
 all: execute
 trabalho2:
+	mkdir -p $(BUILD_PATH)
 	$(CC) -o $(BUILD_PATH)/trabalho2 trabalho2.c queue.c $(LDLIBS)
 
 execute: trabalho2
