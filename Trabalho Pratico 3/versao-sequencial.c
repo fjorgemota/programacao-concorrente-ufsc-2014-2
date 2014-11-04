@@ -95,10 +95,9 @@ int main(int argc, char **argv) {
         printf("./versao-sequencial <min> <max>\n");
         return 1;
     }
-    unsigned int n1, n2, minimo, maximo, intervalo;
+    unsigned int minimo, maximo;
     minimo = atoi(argv[1]);
     maximo = atoi(argv[2]);
-    intervalo = maximo-minimo;
     double* cache = criaCacheEntre(minimo, maximo);
     if (cache == NULL) {
         calculaNumerosMutuamenteAmigosEntre(minimo, maximo);
