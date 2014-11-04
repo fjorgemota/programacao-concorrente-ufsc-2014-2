@@ -8,8 +8,8 @@
  * @param numero: Número para o qual a soma dos divisores
  *                deve ser calculado.
  */ 
-int somaDivisores(int numero) {
-    int divisores, contagem;
+unsigned int somaDivisores(unsigned int numero) {
+    unsigned int divisores, contagem;
     divisores = 1 + numero;
     for (contagem = 2; contagem < numero; contagem++) {
         if (numero % contagem == 0) {
@@ -33,8 +33,8 @@ int somaDivisores(int numero) {
  *                para cada thread durante o preenchimento do
  *                cache.
  */ 
-void calculaNumerosMutuamenteAmigosEntre(int minimo, int maximo, int nThreads) {
-    int n1, n2;
+void calculaNumerosMutuamenteAmigosEntre(unsigned int minimo, unsigned int maximo, unsigned int nThreads) {
+    unsigned int n1, n2;
     #pragma omp parallel
     #pragma omp for schedule(dynamic, nThreads) private(n1, n2)
     for(n1 = minimo; n1 <= maximo; n1++) {
@@ -65,12 +65,12 @@ void calculaNumerosMutuamenteAmigosEntre(int minimo, int maximo, int nThreads) {
  * @param cache: Cache a ser usada como referência para o
  *                calculo dos números mutuamente amigos.
  */ 
-void calculaNumerosMutuamenteAmigosUsandoCacheEntre(int minimo, int maximo, int nThreads, double *cache) {
+void calculaNumerosMutuamenteAmigosUsandoCacheEntre(unsigned int minimo, unsigned int maximo, unsigned int nThreads, double *cache) {
     if (cache == NULL) {
         calculaNumerosMutuamenteAmigosEntre(minimo, maximo, nThreads);
         return;
     }
-    int n1, n2, intervalo;
+    unsigned int n1, n2, intervalo;
     intervalo = maximo - minimo;
     #pragma omp parallel
     #pragma omp for schedule(dynamic, nThreads) private(n1, n2)
@@ -99,8 +99,8 @@ void calculaNumerosMutuamenteAmigosUsandoCacheEntre(int minimo, int maximo, int 
  *                para cada thread durante o preenchimento do
  *                cache.
  */ 
-double* criaCacheEntre(int minimo, int maximo, int nThreads) {
-    int intervalo, n1;
+double* criaCacheEntre(unsigned int minimo, unsigned int maximo, unsigned int nThreads) {
+    unsigned int intervalo, n1;
     double *cache;
     intervalo = maximo-minimo;
     cache = (double*) malloc((intervalo+1)*sizeof(double));
@@ -117,7 +117,8 @@ int main(int argc, char **argv) {
         printf("./versao-paralela <min> <max> <nthreads>\n");
         return 1;
     }
-    int minimo, maximo, nThreads;
+    unsigned int minimo, maximo;
+    int nThreads;
     minimo = atoi(argv[1]);
     maximo = atoi(argv[2]);
     nThreads = atoi(argv[3]);
