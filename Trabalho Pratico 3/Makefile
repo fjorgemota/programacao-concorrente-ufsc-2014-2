@@ -13,6 +13,7 @@ CC := gcc
 .PHONY: versao-paralela
 .PHONY: execute-versao-paralela
 .PHONY: clean
+.PHONY: bench
 
 all: compile execute
 
@@ -31,6 +32,16 @@ execute-versao-sequencial:
 
 execute-versao-paralela:
 	bash -c "time $(BUILD_PATH)/versao-paralela $(MIN) $(MAX) $(NTHREADS) > /dev/null"
+
+bench:
+	echo "Executando versão sequencial 3 vezes com MIN=$(MIN), MAX=$(MAX)...";\
+	make -s execute-versao-sequencial;\
+	make -s execute-versao-sequencial;\
+	make -s execute-versao-sequencial;\
+	echo "Executando versão paralela 3 vezes com NTHREADS=$(NTHREADS), MIN=$(MIN), MAX=$(MAX)...";\
+	make -s execute-versao-paralela;\
+	make -s execute-versao-paralela;\
+	make -s execute-versao-paralela;
 
 execute: execute-versao-sequencial execute-versao-paralela
 
