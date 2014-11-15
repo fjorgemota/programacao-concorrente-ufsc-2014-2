@@ -33,7 +33,7 @@ execute-versao-sequencial:
 execute-versao-paralela:
 	bash -c "time $(BUILD_PATH)/versao-paralela $(MIN) $(MAX) $(NTHREADS) > /dev/null"
 
-bench:
+one-bench: versao-sequencial versao-paralela
 	echo "Executando versão sequencial 3 vezes com MIN=$(MIN), MAX=$(MAX)...";\
 	make -s execute-versao-sequencial;\
 	make -s execute-versao-sequencial;\
@@ -42,6 +42,16 @@ bench:
 	make -s execute-versao-paralela;\
 	make -s execute-versao-paralela;\
 	make -s execute-versao-paralela;
+
+bench:
+	echo "Parâmetros 1:";\
+	make -s one-bench MIN=1 MAX=100000 NTHREADS=2;\
+	echo "Parâmetros 2:";\
+	make -s one-bench MIN=1 MAX=100000 NTHREADS=4;\
+	echo "Parâmetros 3:";\
+	make -s one-bench MIN=10000 MAX=200000 NTHREADS=2;\
+	echo "Parâmetros 4:";\
+	make -s one-bench MIN=10000 MAX=200000 NTHREADS=4;
 
 execute: execute-versao-sequencial execute-versao-paralela
 
